@@ -1,0 +1,75 @@
+package com.silencekeep.eldercarewebview;
+
+
+import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaFormat;
+import android.media.MediaRecorder;
+
+import androidx.core.app.ActivityCompat;
+
+import java.io.IOException;
+import java.util.Base64;
+import java.util.Objects;
+
+public class AudioRecorder {
+    private static final int AUDIO_SOURCE = MediaRecorder.AudioSource.MIC;
+    private static final int SAMPLE_RATE = 44100;
+    private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
+    private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
+
+    private AudioRecord audioRecord;
+    private MediaRecorder mediaRecorder = new MediaRecorder();
+    private MediaCodec mediaCodec;
+    private MediaFormat format;
+    private boolean isRecording = false;
+
+    byte[] buffer;
+
+    @SuppressLint("MissingPermission")
+    public void startRecording() throws IOException {
+        mediaRecorder = new MediaRecorder();
+        audioRecord = new AudioRecord(AUDIO_SOURCE, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE);
+        audioRecord.startRecording();
+
+        mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_MPEG);
+        format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_MPEG, SAMPLE_RATE, 1);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, 128000);
+        format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
+        mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        mediaCodec.start();
+
+        isRecording = true;
+
+        buffer = new byte[BUFFER_SIZE];
+        Thread t = new Thread(()->{
+            while (isRecording) {
+                int bytesRead = audioRecord.read(buffer, 0, BUFFER_SIZE);
+                // 处理录制的音频数据，这里可以将数据保存为二进制文件或进行其他处理
+            }
+        });
+        t.start();
+    }
+
+    public void stopRecording() {
+        isRecording = false;
+
+        if (audioRecord != null) {
+            audioRecord.stop();
+            audioRecord.release();
+            audioRecord = null;
+        }
+    }
+    public String retrieveStreamData() throws Exception {
+        SEncoder mp3Encoder = new SEncoder();
+        byte[] ret = mp3Encoder.encodePcmToAac(buffer,44100,1,128000);
+        if(!isRecording && !Objects.isNull(buffer))
+            return Base64.getEncoder().encodeToString(buffer);
+        throw new Exception("buffer is null or is recording.");
+    }
+}

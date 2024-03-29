@@ -22,6 +22,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
     private TextToSpeech textToSpeech;
     private AudioRecorder audioRecorder;
+    private LocationManagerImpl locImpl;
     private String recognizeResult;
     public Boolean getRecordResult(){
         try{
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FallDetectionService.setM_activity(this);
+        PSClass.setMActivity(this);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -70,16 +72,20 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         wv.getSettings().setJavaScriptEnabled(true);
         wv.setWebContentsDebuggingEnabled(true);
         wv.addJavascriptInterface(new WebAppInterface(this), "Android");
-        wv.loadUrl("http://192.168.43.225:8080/");
+        wv.loadUrl("http://192.168.43.225:3000/login");
 
         Intent intent = new Intent(this, FallDetectionService.class);
 
         startForegroundService(intent);
 
-        PackageManager packageManager = this.getPackageManager();
-        List<ResolveInfo> activities = packageManager.queryIntentActivities(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0);
-        Toast.makeText(this, String.format("%s",activities.size()), Toast.LENGTH_SHORT).show();
+//        PackageManager packageManager = this.getPackageManager();
+//        List<ResolveInfo> activities = packageManager.queryIntentActivities(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0);
+//        Toast.makeText(this, String.format("%s",activities.size()), Toast.LENGTH_SHORT).show();
 
+        locImpl = new LocationManagerImpl(this);
+    }
+    public LocationManagerImpl getLocMgrImpl(){
+        return locImpl;
     }
     @Override
     public void onInit(int status) {

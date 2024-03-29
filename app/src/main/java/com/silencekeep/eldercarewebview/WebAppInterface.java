@@ -1,14 +1,21 @@
 package com.silencekeep.eldercarewebview;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
 import android.widget.Toast;
+
+import java.util.Objects;
 
 public class WebAppInterface {
     private Context mContext;
+    private Handler handler;
 
     public WebAppInterface(Context context) {
         this.mContext = context;
+        handler = new Handler(Looper.getMainLooper());
     }
 
     @JavascriptInterface
@@ -62,5 +69,17 @@ public class WebAppInterface {
     @JavascriptInterface
     public void clearToken() throws InterruptedException {
         PSClass.clearToken();
+    }
+    @JavascriptInterface
+    public void redirect(String s) throws InterruptedException {
+        if(Objects.isNull(s) || s.isEmpty()) return;
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (mContext instanceof MainActivity)
+                    ((WebView)((MainActivity)mContext).findViewById(R.id.webview)).loadUrl(s);
+            }
+        });
+
     }
 }

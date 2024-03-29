@@ -4,6 +4,7 @@ package com.silencekeep.eldercarewebview;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.MediaRecorder;
+import android.os.Build;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +19,9 @@ public class AudioRecorderRes {
     private Context caller;
     public AudioRecorderRes(Context caller) {
         this.caller = caller;
-        mediaRecorder = new MediaRecorder(caller);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            mediaRecorder = new MediaRecorder(caller);
+        }
         try {
             tempFile = File.createTempFile("rec", "m4a");
         } catch (IOException e) {

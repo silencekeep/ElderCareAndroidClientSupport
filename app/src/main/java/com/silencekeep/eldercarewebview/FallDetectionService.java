@@ -7,31 +7,48 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import android.webkit.WebView;
 import android.widget.Toast;
 
-import androidx.annotation.ColorInt;
-import androidx.annotation.Nullable;
+import android.Manifest;
 
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 public class FallDetectionService extends Service implements SensorEventListener {
 
+    private LocationManager mLocationManager;
+    private LocationListener mLocationListener;
+    private static Location currentLoc;
     private AcceleatorProc accProc;
     private static Context m_activity;
     private SensorManager sensorManager;
     private int performanceCounter;
     private Sensor accelerometerSensor;
     private Sensor gyroscopeSensor;
+
+    public static Location getCurrentLoc(){
+        return FallDetectionService.currentLoc;
+    }
     private static final float FALL_THRESHOLD = 65.0f * 0.81847f; // 摔倒阈值
     private boolean isFallDetected = false;
 
@@ -54,6 +71,35 @@ public class FallDetectionService extends Service implements SensorEventListener
     @Override
     public void onCreate() {
         super.onCreate();
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            mLocationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    // 处理获取到的位置信息
+                    sendLocationBroadcast(location);
+                }
+
+                @Override
+                public void onLocationChanged(@NonNull List<Location> locations) {
+                    LocationListener.super.onLocationChanged(locations);
+                }
+
+                @Override
+                public void onFlushComplete(int requestCode) {
+                    LocationListener.super.onFlushComplete(requestCode);
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+                }
+            };
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
+        }
         performanceCounter = 0;
         accProc = new AcceleatorProc(20);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -80,7 +126,9 @@ public class FallDetectionService extends Service implements SensorEventListener
 
         return START_STICKY;
     }
-
+    private void sendLocationBroadcast(Location location) {
+        currentLoc = location;
+    }
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -100,11 +148,18 @@ public class FallDetectionService extends Service implements SensorEventListener
                     ave += iterator.next();
                 }
                 ave /= accProc.getRecentData().size();
-                if(ave > FALL_THRESHOLD)
-                    ((MainActivity)m_activity).speakText("摔倒了");
-                //StringBuffer sb = new StringBuffer();
-                //for(int i=0;i<();i++) sb.append("=");
-                //Log.e("length",String.format("%3.2f%s",(ave / accProc.getRecentData().size()),sb.toString()));
+                if(ave > FALL_THRESHOLD) {
+                    ((MainActivity) m_activity).speakText("您似乎摔倒了或遭遇了强力的碰撞");
+                    Toast.makeText(m_activity,"您似乎摔倒了或遭遇了强力的碰撞",Toast.LENGTH_SHORT).show();
+                    try {
+                        PSClass.reportFalling();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+//                StringBuffer sb = new StringBuffer();
+//                for(int i=0;i<(ave);i++) sb.append("=");
+//                Log.e("length",String.format("%3.2f%s",(ave / accProc.getRecentData().size()),sb.toString()));
             }
         }
     }

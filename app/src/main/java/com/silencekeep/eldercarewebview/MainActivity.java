@@ -4,9 +4,13 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.webkit.WebView;
 import android.widget.Toast;
 
@@ -59,6 +63,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         super.onCreate(savedInstanceState);
         FallDetectionService.setM_activity(this);
         PSClass.setMActivity(this);
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -72,12 +79,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         wv.getSettings().setJavaScriptEnabled(true);
         wv.setWebContentsDebuggingEnabled(true);
         wv.addJavascriptInterface(new WebAppInterface(this), "Android");
-        wv.loadUrl("http://192.168.43.225:3000/login");
+        wv.loadUrl("http://59.110.52.50:3000/login");
 
         Intent intent = new Intent(this, FallDetectionService.class);
-
         startForegroundService(intent);
-
 //        PackageManager packageManager = this.getPackageManager();
 //        List<ResolveInfo> activities = packageManager.queryIntentActivities(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0);
 //        Toast.makeText(this, String.format("%s",activities.size()), Toast.LENGTH_SHORT).show();

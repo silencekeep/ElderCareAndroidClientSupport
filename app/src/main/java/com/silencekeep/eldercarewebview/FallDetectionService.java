@@ -149,8 +149,8 @@ public class FallDetectionService extends Service implements SensorEventListener
                 }
                 ave /= accProc.getRecentData().size();
                 if(ave > FALL_THRESHOLD) {
-                    ((MainActivity) m_activity).speakText("您似乎摔倒了或遭遇了强力的碰撞");
-                    Toast.makeText(m_activity,"您似乎摔倒了或遭遇了强力的碰撞",Toast.LENGTH_SHORT).show();
+                    ((MainActivity) m_activity).speakText("您似乎摔倒了");
+                    Toast.makeText(m_activity,"您似乎摔倒了",Toast.LENGTH_SHORT).show();
                     try {
                         PSClass.reportFalling();
                     } catch (Exception e) {

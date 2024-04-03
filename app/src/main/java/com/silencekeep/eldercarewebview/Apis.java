@@ -22,7 +22,6 @@ public class Apis {
     public static final String SECRET_KEY = "99HGUbGkEPW8syvVfhG6Pkm5qZw2omlb";
     public static String speechToText(String tempFile){
         AipSpeech client = new AipSpeech(APP_ID, API_KEY, SECRET_KEY);
-
         // 可以设置请求参数，例如设置语言为中文
         HashMap<String, Object> options = new HashMap<>();
         options.put("lan", "zh");
